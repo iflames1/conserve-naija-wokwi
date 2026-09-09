@@ -1,0 +1,77 @@
+{
+  "version": 1,
+  "author": "Conserve Naija",
+  "editor": "wokwi",
+  "parts": [
+    {
+      "type": "wokwi-esp32-devkit-v1",
+      "id": "esp",
+      "top": 0,
+      "left": -90,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-lcd2004",
+      "id": "lcd",
+      "top": -40,
+      "left": 140,
+      "attrs": { "pins": "i2c" }
+    },
+    {
+      "type": "wokwi-membrane-keypad",
+      "id": "keypad",
+      "top": 200,
+      "left": -20,
+      "attrs": {
+        "columns": "3",
+        "keys": [
+          "1", "2", "3", "",
+          "4", "5", "6", "",
+          "7", "8", "9", "",
+          "C", "0", "⏎", ""
+        ]
+      }
+    },
+    {
+      "type": "wokwi-potentiometer",
+      "id": "pot",
+      "top": 200,
+      "left": 260,
+      "attrs": { "value": "0" }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "scale-label",
+      "top": 292,
+      "left": 268,
+      "attrs": { "text": "SCALE\n0–5 kg" }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "weigh",
+      "top": 512,
+      "left": 38,
+      "attrs": { "color": "green", "label": "WEIGH", "bounce": "0", "key": "w" }
+    }
+  ],
+  "connections": [
+    ["esp:TX", "$serialMonitor:RX", "", []],
+    ["esp:RX", "$serialMonitor:TX", "", []],
+    ["lcd:GND", "esp:GND.1", "black", ["v0"]],
+    ["lcd:VCC", "esp:3V3", "red", ["v0"]],
+    ["lcd:SDA", "esp:D21", "green", ["v0"]],
+    ["lcd:SCL", "esp:D22", "blue", ["v0"]],
+    ["keypad:R1", "esp:D13", "green", ["v0"]],
+    ["keypad:R2", "esp:D12", "green", ["v0"]],
+    ["keypad:R3", "esp:D14", "green", ["v0"]],
+    ["keypad:R4", "esp:D27", "green", ["v0"]],
+    ["keypad:C1", "esp:D26", "green", ["v0"]],
+    ["keypad:C2", "esp:D25", "green", ["v0"]],
+    ["keypad:C3", "esp:D33", "green", ["v0"]],
+    ["pot:GND", "esp:GND.2", "black", ["v0"]],
+    ["pot:VCC", "esp:3V3", "red", ["v0"]],
+    ["pot:SIG", "esp:D34", "orange", ["v0"]],
+    ["weigh:1.l", "esp:D18", "green", ["v0"]],
+    ["weigh:2.l", "esp:GND.3", "black", ["v0"]]
+  ]
+}
