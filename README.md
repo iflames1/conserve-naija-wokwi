@@ -2,6 +2,7 @@
 
 Prebuilt ESP32 firmware for the [experimental Wokwi viewer](https://wokwi.com/experimental/viewer). Compiled locally so Wokwi cloud compilers are not used.
 
+**Firmware:** `wokwi-0.4.1` (mixed-waste sort, Conserve OTP idle screen)  
 **API:** `https://conserve-naija-production.up.railway.app`  
 **Device:** Yaba / `CN-MACHINE-001` / `cn-dev-yaba-device-key`
 
