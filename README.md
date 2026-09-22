@@ -77,6 +77,18 @@ accepts either spelling on the way in and replies in camelCase, so an image
 already running in the field keeps working. Changing a field name here without
 matching the backend silently breaks deposits with a `422`.
 
+**Lint the diagram before publishing.** `diagram.json` references pins by name,
+and a wrong name fails silently at runtime rather than at load. This has already
+cost two real bugs: `esp:TX`/`esp:RX` are not valid pins (the part exposes
+`TX0`/`RX0`), which meant no serial output at all, and `esp:GND.3` does not exist,
+which left the WEIGH button's ground floating so it could never register a press.
+
+```sh
+wokwi-cli lint .
+```
+
+Run it after any wiring change. Zero errors is the bar.
+
 ## Viewer
 
 https://wokwi.com/experimental/viewer?diagram=https%3A%2F%2Fraw.githubusercontent.com%2Fiflames1%2Fconserve-naija-wokwi%2Fmain%2Fdiagram.json&firmware=https%3A%2F%2Fraw.githubusercontent.com%2Fiflames1%2Fconserve-naija-wokwi%2Fmain%2Ffirmware.bin
