@@ -30,11 +30,16 @@ const char* WIFI_PASS = "";
 #endif
 const char* API_HOST = CN_API_HOST;
 const char* DEVICE_KEY = "cn-dev-yaba-device-key";
-const char* FIRMWARE = "wokwi-0.4.1";
+const char* FIRMWARE = "wokwi-0.4.2";
 const uint32_t WIFI_RETRY_MS = 15000;
-const uint32_t HTTP_TIMEOUT_MS = 4000;
-const uint32_t TLS_HANDSHAKE_S = 10;
+// Generous enough for a cold-started server. A tight timeout showed up as a
+// misleading "NO REPLY" while the host was still booting.
+const uint32_t HTTP_TIMEOUT_MS = 12000;
+const uint32_t TLS_HANDSHAKE_S = 15;
 const uint32_t HEARTBEAT_MS = 30000;
+// How long a result stays on screen before returning to idle.
+const uint32_t ERROR_HOLD_MS = 4000;
+const uint32_t SUCCESS_HOLD_MS = 4000;
 
 const uint8_t PIN_WEIGHT = 34;
 const uint8_t PIN_WEIGH_BTN = 18;
@@ -228,7 +233,11 @@ bool httpOk(int status) {
 }
 
 void setLastError(const String& response, int status, const char* fallback) {
+  // The API reports problems as `detail`; older builds used `error`. A request
+  // validation failure carries an array instead of a sentence, which parses to
+  // an empty string, so the caller's fallback still applies.
   lastError = jsonGet(response, "error");
+  if (lastError.length() == 0) lastError = jsonGet(response, "detail");
   if (lastError.length() > 20) lastError = lastError.substring(0, 20);
   if (lastError.length() == 0) {
     lastError = status < 0 ? "NO REPLY" : fallback;
@@ -429,10 +438,10 @@ void loop() {
     submitFractions(lastWeightKg);
   }
 
-  if (state == ST_SUCCESS && now - stateEntered > 4000) {
+  if (state == ST_SUCCESS && now - stateEntered > SUCCESS_HOLD_MS) {
     enter(ST_RESET);
   }
-  if (state == ST_ERROR && now - stateEntered > 3500) {
+  if (state == ST_ERROR && now - stateEntered > ERROR_HOLD_MS) {
     enter(ST_RESET);
   }
   if (state == ST_RESET && now - stateEntered > 1500) {
