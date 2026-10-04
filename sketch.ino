@@ -12,6 +12,10 @@
  * State machine:
  *   IDLE → ENTER_CODE → AUTHENTICATING → READY
  *        → MEASURING → SORTING → PROCESSING → SUCCESS → RESET → IDLE
+ *
+ * The machine reports what it recovered; the backend values it and pays the
+ * citizen. The figure shown on the success screen is the server's, never a
+ * calculation made here.
  */
 
 #include <WiFi.h>
@@ -30,7 +34,7 @@ const char* WIFI_PASS = "";
 #endif
 const char* API_HOST = CN_API_HOST;
 const char* DEVICE_KEY = "cn-dev-yaba-device-key";
-const char* FIRMWARE = "wokwi-0.4.2";
+const char* FIRMWARE = "wokwi-0.5.0";
 const uint32_t WIFI_RETRY_MS = 15000;
 // Generous enough for a cold-started server. A tight timeout showed up as a
 // misleading "NO REPLY" while the host was still booting.
@@ -87,7 +91,7 @@ String code;
 String sessionId;
 String lastError;
 float lastWeightKg = 0;
-int lastConservePoints = 0;
+long lastAmountKobo = 0;
 unsigned long stateEntered = 0;
 unsigned long lastHeartbeat = 0;
 
@@ -298,6 +302,20 @@ void claimSession() {
   enter(ST_READY);
 }
 
+// Kobo to a short naira string. The LCD is 20 columns, so no thousands
+// separators: "N1250" or "N1250.50" reads fine and always fits.
+String formatNaira(long kobo) {
+  long naira = kobo / 100;
+  long remainder = kobo % 100;
+  String out = String("N") + String(naira);
+  if (remainder != 0) {
+    out += ".";
+    if (remainder < 10) out += "0";
+    out += String(remainder);
+  }
+  return out;
+}
+
 void appendFraction(String& body, bool& first, const char* material, float kg) {
   if (kg < 0.05f) return;
   if (!first) body += ",";
@@ -341,14 +359,15 @@ void submitFractions(float kg) {
     enter(ST_ERROR);
     return;
   }
-  String cp = jsonGet(response, "conservePoints");
-  if (cp.length() == 0) cp = jsonGet(response, "greenPoints");
-  lastConservePoints = cp.toInt();
+  // The server values what was recovered and returns kobo. The machine only
+  // reports and displays; it never computes a reward itself.
+  String amount = jsonGet(response, "amountKobo");
+  lastAmountKobo = amount.toInt();
   lcd.clear();
   lcd.setCursor(0, 0); lcd.print("THAT'S IN");
   lcd.setCursor(0, 1); lcd.print(String(lastWeightKg, 2) + " KG MIXED");
-  lcd.setCursor(0, 2); lcd.print(String("+") + lastConservePoints + " CP");
-  lcd.setCursor(0, 3); lcd.print("Conserve Site Yaba");
+  lcd.setCursor(0, 2); lcd.print(formatNaira(lastAmountKobo));
+  lcd.setCursor(0, 3); lcd.print("Reward on its way");
   state = ST_SUCCESS;
   stateEntered = millis();
 }

@@ -2,13 +2,15 @@
 
 ESP32 firmware and wiring diagram for the [experimental Wokwi viewer](https://wokwi.com/experimental/viewer). Compiled locally so Wokwi cloud compilers are not used.
 
-**Firmware:** `wokwi-0.4.2` (mixed-waste sort, Conserve OTP idle screen, 12s API timeout)
+**Firmware:** `wokwi-0.5.0` (mixed-waste sort, Conserve OTP idle screen, 12s API timeout)
 **API:** the deployed FastAPI service, or `http://127.0.0.1:8080` for local development
 **Device:** Yaba / `CN-MACHINE-001` / `cn-dev-yaba-device-key`
 
-The platform currently has one Conserve Site: **Yaba**. The firmware authenticates
-with its device credential and reports only physical measurements; the backend
-validates them, applies organisation pricing, and calculates Conserve Points.
+The platform currently has one Conserve Site: **Yaba**. The firmware
+authenticates with its device credential and reports only what it measured. The
+backend validates that, values it at the operating organisation's prices, and
+pays the citizen's reward — so the figure on the success screen is the server's,
+never a calculation made on the device.
 
 ## Files
 
@@ -71,11 +73,18 @@ none of your changes. After building, confirm the version actually landed:
 strings .pio/build/esp32dev/firmware.elf | grep -o 'wokwi-0\.[0-9]\.[0-9]'
 ```
 
-**The device protocol is camelCase.** The machine sends and reads `weightKg`,
-`fillPercent`, `firmwareVersion`, `conservePoints`, and `depositId`. The backend
-accepts either spelling on the way in and replies in camelCase, so an image
-already running in the field keeps working. Changing a field name here without
-matching the backend silently breaks deposits with a `422`.
+**The device protocol is camelCase.** The machine sends `weightKg`,
+`fillPercent` and `firmwareVersion`, and reads `amountKobo`, `rewardStatus` and
+`depositId` back. The backend accepts either spelling on the way in and replies in
+camelCase, so an image already running in the field keeps working. Changing a
+field name here without matching the backend silently breaks deposits with a
+`422`.
+
+**The reward is money, not points.** `conservePoints` was removed from the
+platform when rewards became real transfers, so the firmware reads `amountKobo`
+and `formatNaira()` renders it for the 20-column LCD. If the amount ever shows as
+`N0`, the field name and the backend reply have drifted apart — a missing key
+reads as an empty string and `toInt()` gives zero rather than failing loudly.
 
 **Lint the diagram before publishing.** `diagram.json` references pins by name,
 and a wrong name fails silently at runtime rather than at load. This has already
